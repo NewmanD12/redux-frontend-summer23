@@ -16,6 +16,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { registerUser, resetStatus } from '../redux/usersSlice'
 import { CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom'
+import { registrationValidator } from '../lib/validator';
 
 export default function Register() {
 
@@ -35,6 +36,15 @@ export default function Register() {
     error: false,
     message: ''
   })
+  
+  const [isValid, setIsValid] = useState({
+    firstname: {error: false, message: ''},
+    lastname: {error: false, message: ''},
+    email: {error: false, message: ''},
+    password: {error: false, message: ''},
+  })
+
+
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -47,6 +57,38 @@ export default function Register() {
       password: data.get('password'),
     };
 
+    let isErrors = false;
+    
+    if (userObj.password !== data.get('password2')) {
+      isErrors = true
+      setPwdMatch({
+        error: true,
+        message: "Passwords do not Match"
+      })
+    } else {
+      setPwdMatch({
+          error: false,
+          message: ''
+        })
+   
+    }
+
+    const validatorObj = registrationValidator(userObj)
+
+  
+    
+    // iterates through the validatorObj and checks if there any errors are true
+    for (const key in validatorObj) {
+      if(validatorObj[key].error) {
+        isErrors = true
+      }
+    }
+    
+    isErrors ? setIsValid(validatorObj)
+    : 
+    (userObj.password === data.get('password2')) && dispatch(registerUser(userObj))
+
+
   //  (userObj.password !== data.get('password2')) ?
   //     setPwdMatch({
   //       error: true,
@@ -58,18 +100,8 @@ export default function Register() {
   //         message: ''
   //       })
     
-    if (userObj.password !== data.get('password2')) {
-      setPwdMatch({
-        error: true,
-        message: "Passwords do not Match"
-      })
-    } else {
-      setPwdMatch({
-          error: false,
-          message: ''
-        })
-      dispatch(registerUser(userObj))
-    }
+
+    
       
     // (userObj.password === data.get('password2')) && dispatch(registerUser(userObj))
 
@@ -103,6 +135,10 @@ export default function Register() {
                   id="firstName"
                   label="First Name"
                   autoFocus
+                  // error={true}
+                  error={isValid.firstname.error}
+                  // helperText="Firstname is blank"
+                  helperText={isValid.firstname.message}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -113,6 +149,8 @@ export default function Register() {
                   label="Last Name"
                   name="lastName"
                   autoComplete="family-name"
+                  error={isValid.lastname.error}
+                  helperText={isValid.lastname.message}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -123,7 +161,8 @@ export default function Register() {
                   label="Email Address"
                   name="email"
                   autoComplete="email"
-                  // error={true}
+                  error={isValid.email.error}
+                  helperText={isValid.email.message}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -135,6 +174,8 @@ export default function Register() {
                   type="password"
                   id="password"
                   autoComplete="new-password"
+                  error={isValid.password.error}
+                  helperText={isValid.password.message}
                 />
               </Grid>
               <Grid item xs={12}>
